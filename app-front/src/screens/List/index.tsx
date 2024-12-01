@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FlatList, Text, View, Image } from 'react-native';
+import { FlatList, Text, View, Image, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api'; // Certifique-se de que seu serviço axios esteja configurado
 import { Wrapper, Container, ListContainer, TextVagas } from './styles'; // Ajuste os imports de estilos conforme necessário
@@ -7,7 +7,7 @@ import BGTop from '../../assets/BGTop.png'; // Ajuste o caminho
 import Logo from '../../components/Logo'; // Ajuste o caminho
 import VagaCard from '../../components/VagaCard'; // Ajuste o caminho
 
-export default function List() {
+export default function List({ navigation }) {
   const [vagas, setVagas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,6 +36,10 @@ export default function List() {
     fetchVagas();
   }, []);
 
+  const handleNavigateToDetails = (id) => {
+    navigation.navigate('Details', { id });
+  };
+
   return (
     <Wrapper>
       <Image source={BGTop} style={{ maxHeight: 86 }} />
@@ -51,12 +55,14 @@ export default function List() {
               data={vagas}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                <VagaCard
-                  id={item.id}
-                  title={item.titulo}
-                  dataCreated={item.dataCadastro}
-                  company={item.empresa}
-                />
+                <TouchableOpacity onPress={() => handleNavigateToDetails(item.id)}>
+                  <VagaCard
+                    id={item.id}
+                    title={item.titulo}
+                    dataCreated={item.dataCadastro}
+                    company={item.empresa}
+                  />
+                </TouchableOpacity>
               )}
               showsVerticalScrollIndicator={true}
               ListEmptyComponent={() => (
