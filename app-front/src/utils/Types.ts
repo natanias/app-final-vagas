@@ -10,7 +10,9 @@ export type VagaProps = {
 export type RootStackParamList = {
     Login: undefined;
     FormScreen: undefined;
+    Auth: undefined;
     Home: undefined;
     Profile: undefined;
     Details: {id: number};
+    List: undefined;
 };

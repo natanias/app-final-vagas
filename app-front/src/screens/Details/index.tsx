@@ -12,7 +12,7 @@ import {
   ContentContainer,
   Title,
   Description,
-  TitleError
+  TitleError,
 } from '../Details/styles';
 
 import api from '../../services/api';
@@ -25,59 +25,45 @@ import { Button } from '../../components/Button';
 export default function Details({ route, navigation }) {
   const [id, setId] = useState(route.params.id);
   const [vaga, setVaga] = useState<VagaProps | null>(null);
-  const [loading, setLoading] = useState(true); // Adiciona estado de carregamento
-  const [error, setError] = useState(''); // Estado para capturar erro
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchVaga = async () => {
     try {
-      // Recupera o token JWT armazenado
       const token = await AsyncStorage.getItem('userToken');
-
-      // Faz a requisição com o token no cabeçalho
       const response = await api.get(`/vagas/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      console.log('API Response:', response.data); // Verifique o conteúdo da resposta
+      const data = response.data.job;
 
-      const data = response.data.job; // Verifique se os dados estão na chave `job`
-      
       if (data) {
         setVaga({
           status: data.status,
           id: data.id,
           title: data.titulo,
           description: data.descricao,
-          date: new Date(data.dataCadastro).toLocaleDateString(), // Formata a data
+          date: new Date(data.dataCadastro).toLocaleDateString(),
           phone: data.telefone,
           company: data.empresa,
         });
       } else {
-        setError('Vaga não encontrada!');
+        setError('Vaga não encontrada.');
       }
     } catch (error) {
-      console.error('Erro ao buscar detalhes da vaga:', error);
-      setError('Erro ao carregar a vaga.');
+      setError('Erro ao carregar os detalhes da vaga.');
     } finally {
-      setLoading(false); // Finaliza o carregamento
+      setLoading(false);
     }
   };
 
   const sendWhatsapp = (vagaTitle, telefone) => {
-    const url =
-      'whatsapp://send?text=' +
-      `Olá! Gostaria de ter mais informações sobre a vaga: ${vagaTitle}` +
-      `&phone=${telefone}`;
-
-    Linking.openURL(url)
-      .then(() => {
-        console.log('WhatsApp Opened');
-      })
-      .catch(() => {
-        alert('Certifique-se de que o WhatsApp está instalado no dispositivo');
-      });
+    const url = `https://wa.me/${telefone}?text=Olá! Gostaria de mais informações sobre a vaga: ${vagaTitle}`;
+    Linking.openURL(url).catch(() => {
+      alert('Certifique-se de que o WhatsApp está instalado no dispositivo.');
+    });
   };
 
   useEffect(() => {
@@ -85,7 +71,7 @@ export default function Details({ route, navigation }) {
   }, [id]);
 
   if (loading) {
-    return <TitleError>Carregando...</TitleError>; // Exibe um carregando enquanto os dados estão sendo recuperados
+    return <TitleError>Carregando...</TitleError>;
   }
 
   return (

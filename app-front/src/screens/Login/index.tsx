@@ -1,7 +1,7 @@
-import { Image } from 'react-native';
-import {useState} from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Wrapper,Container, Form, TextContainer, TextBlack, TextLink, TextLinkContainer } from './styles';
+import { Image, Alert } from 'react-native';
+import { useState, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import { Wrapper, Container, Form, TextContainer, TextBlack, TextLink, TextLinkContainer } from './styles';
 import api from '../../services/api';
 
 import BGTop from '../../assets/BGTop.png';
@@ -9,65 +9,75 @@ import Logo from '../../components/Logo';
 import Input from '../../components/Input';
 import { Button } from '../../components/Button';
 
-
 export default function Login({ navigation }) {
+  const { login } = useContext(AuthContext); // Contexto de autenticação
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  const handleLogin = async () => {
+    if (!email || !senha) {
+      Alert.alert('Campos obrigatórios', 'Preencha o e-mail e a senha para continuar.');
+      return;
+    }
 
-    const [email, setEmail] = useState('');
-    const [senha, setSenha] = useState('');
+    setLoading(true);
 
+    try {
+      const response = await api.post('usuarios/login', { email, senha });
+      const { token } = response.data;
 
-    const handleLogin = async () => {
-      try {
-          const response = await api.post('usuarios/login', {
-              email, // Email inserido no campo de login
-              senha, // Senha inserida no campo de login
-          });
-  
-          const { token } = response.data; // Obtém o token JWT do servidor
-          console.log('Login successful:', token);
-  
-          // Salve o token em um local seguro (AsyncStorage, SecureStore, etc.)
-          // Aqui está um exemplo com AsyncStorage
-          await AsyncStorage.setItem('userToken', token);
-  
-          // Navegue para a próxima tela ou faça outras ações necessárias
-          navigation.navigate('Auth', { screen: 'Home' });
-      } catch (error) {
-          console.error('Login failed:', error.response?.data || error.message);
-          console.log('Login failed:', 'Email ou senha inválidos ou erro no servidor');
+      if (token) {
+        await login(token); // Salva o token no contexto e AsyncStorage
+        navigation.replace('Auth'); // Navega para as rotas protegidas
+      } else {
+        Alert.alert('Erro', 'Token não recebido. Verifique a API.');
       }
+    } catch (error) {
+      console.error('Erro ao fazer login:', error.response?.data || error.message);
+      Alert.alert('Erro ao fazer login', 'Verifique suas credenciais ou tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+    }
   };
-  
-    return (
-        <Wrapper>
-            <Image source={BGTop} />
 
-            <Container>
+  return (
+    <Wrapper>
+      <Image source={BGTop} />
 
-                <Form>
-                    <Logo />
-                    <Input label='E-mail' placeholder='digite seu e-mail' value={email}
-        onChangeText={setEmail}/>
-                    <Input label='Senha' placeholder='digite sua senha' value={senha}
-        onChangeText={setSenha}/>
-                    <Button 
-                    title="Entrar" 
-                    noSpacing={true} 
-                    variant='primary'
-                    onPress={handleLogin}
-                    />
-                    <TextContainer>
-                        <TextBlack>Não tem uma conta?</TextBlack>
-                        <TextLinkContainer onPress={() => navigation.navigate('FormScreen')}>
-                            <TextLink>
-                                    Crie agora mesmo.
-                            </TextLink>
-                        </TextLinkContainer>
-                    </TextContainer>
-                </Form>
-
-            </Container>
-        </Wrapper>
-    );
+      <Container>
+        <Form>
+          <Logo />
+          <Input
+            label="E-mail"
+            placeholder="Digite seu e-mail"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Input
+            label="Senha"
+            placeholder="Digite sua senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry
+          />
+          <Button
+            title={loading ? 'Entrando...' : 'Entrar'}
+            noSpacing
+            variant="primary"
+            onPress={handleLogin}
+            disabled={loading}
+          />
+          <TextContainer>
+            <TextBlack>Não tem uma conta?</TextBlack>
+            <TextLinkContainer onPress={() => navigation.navigate('FormScreen')}>
+              <TextLink>Crie agora mesmo.</TextLink>
+            </TextLinkContainer>
+          </TextContainer>
+        </Form>
+      </Container>
+    </Wrapper>
+  );
 }

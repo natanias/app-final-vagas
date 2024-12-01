@@ -1,38 +1,41 @@
 import { useState, useEffect } from 'react';
-import { FlatList, Text, View, Image, TouchableOpacity } from 'react-native';
+import { FlatList, Text, View, Image, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../services/api'; // Certifique-se de que seu serviço axios esteja configurado
-import { Wrapper, Container, ListContainer, TextVagas } from './styles'; // Ajuste os imports de estilos conforme necessário
-import BGTop from '../../assets/BGTop.png'; // Ajuste o caminho
-import Logo from '../../components/Logo'; // Ajuste o caminho
-import VagaCard from '../../components/VagaCard'; // Ajuste o caminho
+import api from '../../services/api';
+import { Wrapper, Container, ListContainer, TextVagas } from './styles';
+import BGTop from '../../assets/BGTop.png';
+import Logo from '../../components/Logo';
+import VagaCard from '../../components/VagaCard';
 
 export default function List({ navigation }) {
   const [vagas, setVagas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Função para buscar as vagas da API
+  const fetchVagas = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado.');
+      }
+
+      const response = await api.get('/vagas', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setVagas(response.data.jobs);
+    } catch (error) {
+      console.error('Erro ao buscar vagas:', error.message || error);
+      setError('Erro ao carregar as vagas. Tente novamente mais tarde.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchVagas = async () => {
-      try {
-        // Recupera o token JWT do armazenamento seguro
-        const token = await AsyncStorage.getItem('userToken');
-
-        // Configura os headers com o token
-        const response = await api.get('/vagas', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Atualiza o estado com as vagas retornadas
-        setVagas(response.data.jobs);
-      } catch (error) {
-        console.error('Erro ao buscar vagas:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchVagas();
   }, []);
 
@@ -46,7 +49,14 @@ export default function List({ navigation }) {
 
       <Container>
         <Logo />
-        <TextVagas>{vagas.length} vagas encontradas!</TextVagas>
+        {isLoading ? (
+          <TextVagas>Carregando vagas...</TextVagas>
+        ) : error ? (
+          <TextVagas>{error}</TextVagas>
+        ) : (
+          <TextVagas>{vagas.length} vagas encontradas!</TextVagas>
+        )}
+
         <ListContainer>
           {isLoading ? (
             <Text>Carregando...</Text>
@@ -64,7 +74,7 @@ export default function List({ navigation }) {
                   />
                 </TouchableOpacity>
               )}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               ListEmptyComponent={() => (
                 <View>
                   <Text>Não há vagas disponíveis no momento.</Text>
