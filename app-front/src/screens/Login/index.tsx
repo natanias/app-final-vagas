@@ -1,5 +1,6 @@
 import { Image } from 'react-native';
 import {useState} from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Wrapper,Container, Form, TextContainer, TextBlack, TextLink, TextLinkContainer } from './styles';
 import api from '../../services/api';
 
@@ -17,27 +18,27 @@ export default function Login({ navigation }) {
 
 
     const handleLogin = async () => {
-        try {
-          const response = await api.get('/usuarios');
-          const users = response.data;
-          console.log(users);
-    
-          const user = users.find(u => u.email === email && u.senha === senha);
-    
-          if (user) {
-            console.log('Login successful', `Welcome, ${user.nome}!`);
-            navigation.navigate('Auth', { screen: 'Home' });
-            // Navegue para a próxima tela ou faça outras ações necessárias
-            // navigation.navigate('NextScreen');
-          } else {
-            console.log('Login failed', 'Email or password is incorrect');
-          }
-        } catch (error) {
-          console.error(error);
-          console.log('Login failed', 'An error occurred during login');
-        }
-      };
-
+      try {
+          const response = await api.post('usuarios/login', {
+              email, // Email inserido no campo de login
+              senha, // Senha inserida no campo de login
+          });
+  
+          const { token } = response.data; // Obtém o token JWT do servidor
+          console.log('Login successful:', token);
+  
+          // Salve o token em um local seguro (AsyncStorage, SecureStore, etc.)
+          // Aqui está um exemplo com AsyncStorage
+          await AsyncStorage.setItem('userToken', token);
+  
+          // Navegue para a próxima tela ou faça outras ações necessárias
+          navigation.navigate('Auth', { screen: 'Home' });
+      } catch (error) {
+          console.error('Login failed:', error.response?.data || error.message);
+          console.log('Login failed:', 'Email ou senha inválidos ou erro no servidor');
+      }
+  };
+  
     return (
         <Wrapper>
             <Image source={BGTop} />
