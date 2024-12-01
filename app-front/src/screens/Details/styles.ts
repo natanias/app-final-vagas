@@ -57,3 +57,11 @@ export const Description = styled.Text`
   text-align: left;
   color: ${({theme})=>theme.COLORS.BLACK};
 `;
+
+export const TitleError = styled.Text`
+  margin-top: 64px;
+  font-size: ${({theme})=>theme.FONT_SIZE.LG}px;
+  font-weight: 700;
+  text-align: center;
+  color: ${({theme})=>theme.COLORS.BLACK};
+`;

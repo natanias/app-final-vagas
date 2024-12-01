@@ -1,7 +1,9 @@
-export type TaskProps = {
+export type VagaProps = {
     id: number;
     title: String;
+    description: String;
     date: String;
+    phone: String;
     company: String;
 };
 
