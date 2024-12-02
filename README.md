@@ -19,7 +19,9 @@ Este projeto é um aplicativo mobile desenvolvido em *React Native* com *Expo, c
    cd api é a pasta da api para iniciar o servidor use "npm start"
    cd app-front é a pasta da aplicação
 
-O servidor estará rodando em http://localhost:3000.
+O servidor estará rodandoem  services - http://localhost:3000.
+vá em CMD e insira ipconfig.
+Adicionar o ipv4 no http://{...}:3000
 
 ## 👨‍💻 *Autores*
 Desenvolvido por Natanias, Weider, Nayran, Ricardo.
