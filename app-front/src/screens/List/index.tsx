@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FlatList, Text, View, Image, TouchableOpacity } from 'react-native';
+import { FlatList, Text, View, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api'; // Certifique-se de que seu serviço axios esteja configurado
 import { Wrapper, Container, ListContainer, TextVagas } from './styles'; // Ajuste os imports de estilos conforme necessário
@@ -11,28 +11,23 @@ export default function List({ navigation }) {
   const [vagas, setVagas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchVagas = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await api.get('/vagas', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setVagas(response.data.jobs); // Verifique se o backend retorna as vagas na chave `jobs`
+    } catch (error) {
+      console.error('Erro ao buscar vagas:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchVagas = async () => {
-      try {
-        // Recupera o token JWT do armazenamento seguro
-        const token = await AsyncStorage.getItem('userToken');
-
-        // Configura os headers com o token
-        const response = await api.get('/vagas', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Atualiza o estado com as vagas retornadas
-        setVagas(response.data.jobs);
-      } catch (error) {
-        console.error('Erro ao buscar vagas:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchVagas();
   }, []);
 
@@ -43,13 +38,12 @@ export default function List({ navigation }) {
   return (
     <Wrapper>
       <Image source={BGTop} style={{ maxHeight: 86 }} />
-
       <Container>
         <Logo />
         <TextVagas>{vagas.length} vagas encontradas!</TextVagas>
         <ListContainer>
           {isLoading ? (
-            <Text>Carregando...</Text>
+            <ActivityIndicator size="large" color="#00ff00" />
           ) : (
             <FlatList
               data={vagas}
@@ -59,8 +53,8 @@ export default function List({ navigation }) {
                   <VagaCard
                     id={item.id}
                     title={item.titulo}
-                    dataCreated={item.dataCadastro}
                     company={item.empresa}
+                    dataCreated={item.dataCadastro}
                   />
                 </TouchableOpacity>
               )}
