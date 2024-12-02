@@ -1,19 +1,20 @@
-import { Image, Alert } from 'react-native';
-import { useState, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useState, useContext } from 'react';
+import { Alert, Image } from 'react-native';
 import { Wrapper, Container, Form, TextContainer, TextBlack, TextLink, TextLinkContainer } from './styles';
-import api from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../../context/AuthContext'; // Certifique-se de que o contexto está configurado
 
+import api from '../../services/api';
 import BGTop from '../../assets/BGTop.png';
 import Logo from '../../components/Logo';
 import Input from '../../components/Input';
 import { Button } from '../../components/Button';
 
 export default function Login({ navigation }) {
-  const { login } = useContext(AuthContext); // Contexto de autenticação
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useContext(AuthContext); // Usa o contexto de autenticação
 
   const handleLogin = async () => {
     if (!email || !senha) {
@@ -24,18 +25,18 @@ export default function Login({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await api.post('usuarios/login', { email, senha });
+      const response = await api.post('/usuarios/login', { email, senha });
       const { token } = response.data;
 
-      if (token) {
-        await login(token); // Salva o token no contexto e AsyncStorage
-        navigation.replace('Auth'); // Navega para as rotas protegidas
-      } else {
-        Alert.alert('Erro', 'Token não recebido. Verifique a API.');
-      }
+      // Salvar o token no AsyncStorage e atualizar o contexto
+      await AsyncStorage.setItem('userToken', token);
+      login(token); // Atualiza o estado de autenticação no contexto
+
+      // Redirecionar para o Auth (Home)
+      navigation.replace('Auth');
     } catch (error) {
       console.error('Erro ao fazer login:', error.response?.data || error.message);
-      Alert.alert('Erro ao fazer login', 'Verifique suas credenciais ou tente novamente mais tarde.');
+      Alert.alert('Erro', 'Credenciais inválidas ou erro no servidor.');
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,6 @@ export default function Login({ navigation }) {
   return (
     <Wrapper>
       <Image source={BGTop} />
-
       <Container>
         <Form>
           <Logo />

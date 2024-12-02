@@ -104,7 +104,7 @@ export default function Details({ route, navigation }) {
               </Description>
             </ContentContainer>
 
-            {vaga.status === 'Disponível' && (
+            {(vaga.status === 'Disponível' || vaga.status === 'aberta') && (
               <Button
                 title="Entrar em contato"
                 noSpacing={true}

@@ -13,32 +13,30 @@ export const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: () => {},
   logout: () => {},
+  
 });
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Função para realizar o login
   const login = async (token: string) => {
     setUserToken(token);
     await AsyncStorage.setItem('userToken', token);
   };
 
-  // Função para realizar o logout
   const logout = async () => {
     setUserToken(null);
     await AsyncStorage.removeItem('userToken');
   };
 
-  // Recuperar o token ao carregar o app
   useEffect(() => {
-    const checkToken = async () => {
+    const loadToken = async () => {
       const token = await AsyncStorage.getItem('userToken');
       setUserToken(token);
       setIsLoading(false);
     };
-    checkToken();
+    loadToken();
   }, []);
 
   return (
