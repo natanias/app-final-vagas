@@ -5,30 +5,32 @@ import Logo from '../../components/Logo';
 import Input from '../../components/Input';
 import { Button } from '../../components/Button';
 
-export default function FormScreen({navigation}) {
+export default function FormScreen({ navigation }) {
+    const handleRegister = () => {
+      // Simulação de registro
+      alert('Usuário registrado com sucesso!');
+      navigation.navigate('Login');
+    };
+  
     return (
-        <Wrapper>
-            <Image source={BGTop} />
-
-            <Container>
-
-                <Form>
-                    <Logo />
-                    <Input label='Nome' placeholder='digite seu nome'/>
-                    <Input label='E-mail' placeholder='digite seu e-mail'/>
-                    <Input label='Senha' placeholder='digite sua senha'/>
-                    <Button title="Entrar" noSpacing={true} variant='primary'/>
-                    <TextContainer>
-                        <TextBlack>Já tem uma conta?</TextBlack>
-                        <TextLinkContainer onPress={() => navigation.navigate('Login')}>
-                            <TextLink>
-                                    Faça seu login.
-                            </TextLink>
-                        </TextLinkContainer>
-                    </TextContainer>
-                </Form>
-
-            </Container>
-        </Wrapper>
+      <Wrapper>
+        <Image source={BGTop} />
+        <Container>
+          <Form>
+            <Logo />
+            <Input label="Nome" placeholder="Digite seu nome" />
+            <Input label="E-mail" placeholder="Digite seu e-mail" />
+            <Input label="Senha" placeholder="Digite sua senha" secureTextEntry />
+            <Button title="Registrar" noSpacing variant="primary" onPress={handleRegister} />
+            <TextContainer>
+              <TextBlack>Já tem uma conta?</TextBlack>
+              <TextLinkContainer onPress={() => navigation.navigate('Login')}>
+                <TextLink>Faça seu login.</TextLink>
+              </TextLinkContainer>
+            </TextContainer>
+          </Form>
+        </Container>
+      </Wrapper>
     );
 }
+  

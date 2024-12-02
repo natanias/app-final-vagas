@@ -1,94 +1,89 @@
-import React from 'react';
-import { Image, FlatList, View, Text } from 'react-native';
-import { Wrapper,Container, ListContainer, TextVagas } from './styles';
+import { useState, useEffect } from 'react';
+import { FlatList, Text, View, Image, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../services/api';
+import { Wrapper, Container, ListContainer, TextVagas } from './styles';
 import BGTop from '../../assets/BGTop.png';
 import Logo from '../../components/Logo';
 import VagaCard from '../../components/VagaCard';
 
+export default function List({ navigation }) {
+  const [vagas, setVagas] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export default function List() {
+  // Função para buscar as vagas da API
+  const fetchVagas = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado.');
+      }
 
-
-    const DATA = [
-        {
-          "id": 1,
-          "titulo": "Desenvolvedor Front-end",
-          "data_cadastro": "2024-06-21",
-          "empresa": "Tech Solutions"
+      const response = await api.get('/vagas', {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          "id": 2,
-          "titulo": "Analista de Dados",
-          "data_cadastro": "2024-06-18",
-          "empresa": "Data Insights"
-        },
-        {
-          "id": 3,
-          "titulo": "Gerente de Projetos",
-          "data_cadastro": "2024-06-15",
-          "empresa": "Project Masters"
-        },
-        {
-          "id": 4,
-          "titulo": "Gerente de Projetos",
-          "data_cadastro": "2024-06-15",
-          "empresa": "Project Masters"
-        },
-        {
-          "id": 5,
-          "titulo": "Gerente de Projetos",
-          "data_cadastro": "2024-06-15",
-          "empresa": "Project Masters"
-        },
-        {
-          "id": 6,
-          "titulo": "Gerente de Projetos",
-          "data_cadastro": "2024-06-15",
-          "empresa": "Project Masters"
-        },
-        {
-          "id": 7,
-          "titulo": "Gerente de Projetos",
-          "data_cadastro": "2024-06-15",
-          "empresa": "Project Masters"
-        }
-      ]
+      });
 
-    return (
-        <Wrapper>
-            <Image source={BGTop} style={{maxHeight: 86}}/>
+      setVagas(response.data.jobs);
+    } catch (error) {
+      console.error('Erro ao buscar vagas:', error.message || error);
+      setError('Erro ao carregar as vagas. Tente novamente mais tarde.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            <Container>
+  useEffect(() => {
+    fetchVagas();
+  }, []);
 
-                <Logo />
-                <TextVagas>{DATA.length} vagas encontradas!</TextVagas>
-                <ListContainer>
-                    <FlatList
-                        data={DATA}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({item}) => 
-                            <VagaCard
-                                id={item.id}
-                                title={item.titulo} 
-                                dataCreated={item.data_cadastro}
-                                company={item.empresa}
-                            />
-                        }
-                        showsVerticalScrollIndicator={true}
-                        ListEmptyComponent={() => (
-                            <View>
-                                <Text>
-                                    Você ainda não tem tarefas cadastradas
-                                </Text>
-                                <Text>
-                                    Crie tarefas e organize seus itens a fazer.
-                                </Text>
-                            </View>
-                        )}
-                    />
-                </ListContainer>
+  const handleNavigateToDetails = (id) => {
+    navigation.navigate('Details', { id });
+  };
 
-            </Container>
-        </Wrapper>
-    );
+  return (
+    <Wrapper>
+      <Image source={BGTop} style={{ maxHeight: 86 }} />
+
+      <Container>
+        <Logo />
+        {isLoading ? (
+          <TextVagas>Carregando vagas...</TextVagas>
+        ) : error ? (
+          <TextVagas>{error}</TextVagas>
+        ) : (
+          <TextVagas>{vagas.length} vagas encontradas!</TextVagas>
+        )}
+
+        <ListContainer>
+          {isLoading ? (
+            <Text>Carregando...</Text>
+          ) : (
+            <FlatList
+              data={vagas}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => handleNavigateToDetails(item.id)}>
+                  <VagaCard
+                    id={item.id}
+                    title={item.titulo}
+                    dataCreated={item.dataCadastro}
+                    company={item.empresa}
+                  />
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={() => (
+                <View>
+                  <Text>Não há vagas disponíveis no momento.</Text>
+                </View>
+              )}
+            />
+          )}
+        </ListContainer>
+      </Container>
+    </Wrapper>
+  );
 }
