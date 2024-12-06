@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Linking, Text, ActivityIndicator } from 'react-native';
+import { Linking, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -13,16 +13,18 @@ import {
   Title,
   Description,
   TitleError,
-} from './styles';
+} from '../Details/styles';
 
 import api from '../../services/api';
+import { VagaProps } from '../../utils/Types';
+
 import Logo from '../../components/Logo';
 import theme from '../../theme';
 import { Button } from '../../components/Button';
 
 export default function Details({ route, navigation }) {
-  const { id } = route.params;
-  const [vaga, setVaga] = useState(null);
+  const [id, setId] = useState(route.params.id);
+  const [vaga, setVaga] = useState<VagaProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,38 +37,41 @@ export default function Details({ route, navigation }) {
         },
       });
 
-      const data = response.data.job; // Certifique-se de que a chave está correta no retorno da API
+      const data = response.data.job;
+
       if (data) {
-        setVaga(data);
+        setVaga({
+          status: data.status,
+          id: data.id,
+          title: data.titulo,
+          description: data.descricao,
+          date: new Date(data.dataCadastro).toLocaleDateString(),
+          phone: data.telefone,
+          company: data.empresa,
+        });
       } else {
-        setError('Vaga não encontrada!');
+        setError('Vaga não encontrada.');
       }
     } catch (error) {
-      console.error('Erro ao buscar detalhes da vaga:', error);
-      setError('Erro ao carregar a vaga.');
+      setError('Erro ao carregar os detalhes da vaga.');
     } finally {
       setLoading(false);
     }
   };
 
   const sendWhatsapp = (vagaTitle, telefone) => {
-    const url = `whatsapp://send?text=Olá! Gostaria de mais informações sobre a vaga: ${vagaTitle}&phone=${telefone}`;
-
+    const url = `https://wa.me/${telefone}?text=Olá! Gostaria de mais informações sobre a vaga: ${vagaTitle}`;
     Linking.openURL(url).catch(() => {
-      alert('Certifique-se de que o WhatsApp está instalado no dispositivo');
+      alert('Certifique-se de que o WhatsApp está instalado no dispositivo.');
     });
   };
 
   useEffect(() => {
     fetchVaga();
-  }, []);
+  }, [id]);
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#00ff00" />;
-  }
-
-  if (error) {
-    return <TitleError>{error}</TitleError>;
+    return <TitleError>Carregando...</TitleError>;
   }
 
   return (
@@ -80,31 +85,36 @@ export default function Details({ route, navigation }) {
         </HeaderButtonContainer>
         <Logo />
       </Header>
-      <Container>
-        <ContentContainer>
-          <Title>{vaga.titulo}</Title>
-          <Description>{vaga.descricao}</Description>
-          <Description>
-            <Text style={{ fontWeight: 'bold' }}>Empresa:</Text> {vaga.empresa}
-          </Description>
-          <Description>
-            <Text style={{ fontWeight: 'bold' }}>Data de Cadastro:</Text>{' '}
-            {new Date(vaga.dataCadastro).toLocaleDateString()}
-          </Description>
-          <Description>
-            <Text style={{ fontWeight: 'bold' }}>Status:</Text> {vaga.status}
-          </Description>
-        </ContentContainer>
+      {error ? (
+        <TitleError>{error}</TitleError>
+      ) : (
+        vaga && (
+          <Container>
+            <ContentContainer>
+              <Title>{vaga.title}</Title>
+              <Description>{vaga.description}</Description>
+              <Description>
+                <Text style={{ fontWeight: 'bold' }}>Empresa:</Text> {vaga.company}
+              </Description>
+              <Description>
+                <Text style={{ fontWeight: 'bold' }}>Data de Cadastro:</Text> {vaga.date}
+              </Description>
+              <Description>
+                <Text style={{ fontWeight: 'bold' }}>Status:</Text> {vaga.status}
+              </Description>
+            </ContentContainer>
 
-        {vaga.status === 'aberta' && (
-          <Button
-            title="Entrar em contato"
-            noSpacing={true}
-            variant="primary"
-            onPress={() => sendWhatsapp(vaga.titulo, vaga.telefone)}
-          />
-        )}
-      </Container>
+            {vaga.status === 'Disponível' && (
+              <Button
+                title="Entrar em contato"
+                noSpacing={true}
+                variant="primary"
+                onPress={() => sendWhatsapp(vaga.title, vaga.phone)}
+              />
+            )}
+          </Container>
+        )
+      )}
     </Wrapper>
   );
 }
